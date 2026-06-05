@@ -1,0 +1,416 @@
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (
+        e.key === 'F12' || 
+        e.keyCode === 123 || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.keyCode === 73 || e.key === 'J' || e.keyCode === 74 || e.key === 'C' || e.keyCode === 67)) || 
+        (e.ctrlKey && (e.key === 'U' || e.keyCode === 85)) || 
+        (e.ctrlKey && (e.key === 'S' || e.keyCode === 83))
+    ) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+function toggleQuranLibrary() {
+    var quranLib = document.getElementById('quran-library-container');
+    var audioEl = document.getElementById('mainAudio');
+    
+    if (quranLib.style.display === 'none' || quranLib.style.display === '') {
+        quranLib.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    } else {
+        quranLib.style.display = 'none';
+        document.body.style.overflow = '';
+        if(audioEl && !audioEl.paused) {
+            audioEl.pause();
+        }
+    }
+}
+
+const targetSurahs = [
+    { id: '001', ar: 'الفاتحة', en: 'Al-Fatihah' }, { id: '002', ar: 'البقرة', en: 'Al-Baqarah' },
+    { id: '003', ar: 'آل عمران', en: 'Aal-E-Imran' }, { id: '012', ar: 'يوسف', en: 'Yusuf' },
+    { id: '018', ar: 'الكهف', en: 'Al-Kahf' }, { id: '019', ar: 'مريم', en: 'Maryam' },
+    { id: '021', ar: 'الأنبياء', en: 'Al-Anbiya' }, { id: '025', ar: 'الفرقان', en: 'Al-Furqan' },
+    { id: '036', ar: 'يس', en: 'Yaseen' }, { id: '055', ar: 'الرحمن', en: 'Ar-Rahman' },
+    { id: '067', ar: 'الملك', en: 'Al-Mulk' }, { id: '072', ar: 'الجن', en: 'Al-Jinn' },
+    { id: '112', ar: 'الإخلاص', en: 'Al-Ikhlas' }, { id: '113', ar: 'الفلق', en: 'Al-Falaq' },
+    { id: '114', ar: 'الناس', en: 'An-Nas' }
+];
+
+const reciters = [
+    { id: 'abdulbasit', ar: 'عبدالباسط عبدالصمد', en: 'Abdulbasit Abdulsamad', prefix: 'https://server7.mp3quran.net/basit/' },
+    { id: 'jaleel', ar: 'خالد الجليل', en: 'Khalid Al-Jaleel', prefix: 'https://server10.mp3quran.net/jleel/' },
+    { id: 'ajmi', ar: 'أحمد العجمي', en: 'Ahmed Al-Ajmi', prefix: 'https://server10.mp3quran.net/ajm/' },
+    { id: 'idris', ar: 'إدريس أبكر', en: 'Idris Abkar', prefix: 'https://server6.mp3quran.net/abkr/' },
+    { id: 'maher', ar: 'ماهر المعيقلي', en: 'Maher Al-Muaiqly', prefix: 'https://server12.mp3quran.net/maher/' },
+    { id: 'barrak', ar: 'محمد البراك', en: 'Muhammad Al-Barrak', prefix: 'https://server13.mp3quran.net/barrak/' },
+    { id: 'minshawi', ar: 'محمد صديق المنشاوي', en: 'Muhammad Al-Minshawi', prefix: 'https://server10.mp3quran.net/minsh/' },
+    { id: 'fares', ar: 'فارس عباد', en: 'Fares Abbad', prefix: 'https://server8.mp3quran.net/frs_a/' },
+    { id: 'yasser', ar: 'ياسر الدوسري', en: 'Yasser Al-Dosari', prefix: 'https://server11.mp3quran.net/yasser/' },
+    { id: 'mishary', ar: 'مشاري العفاسي', en: 'Mishary Alafasy', prefix: 'https://server8.mp3quran.net/afs/' }
+];
+
+const adhkarAndDuas = [
+    { id: 'm-adhkar', src: 'https://a7la7ek-wahetaleslam.github.io/a7la7ekaya/mp3/azkar-alsabah.mp3', ar: 'أذكار الصباح', en: 'Morning Adhkar' },
+    { id: 'e-adhkar', src: 'https://a7la7ek-wahetaleslam.github.io/a7la7ekaya/mp3/azkar-almasa.mp3', ar: 'أذكار المساء', en: 'Evening Adhkar' },
+    { id: 'ruqyah', src: 'https://a7la7ek-wahetaleslam.github.io/a7la7ekaya/mp3/Alroqyah_Al3gmy.mp3', ar: 'الرقية الشرعية (أحمد العجمي)', en: 'Ruqyah Shariyah - Al-Ajmi' },
+    { id: 'ayat-alkursi', src: 'https://a7la7ek-wahetaleslam.github.io/a7la7ekaya/mp3/alkorsi-ajmi.mp3', ar: 'آية الكرسي (أحمد العجمي)', en: 'Ayat Al-Kursi - Al-Ajmi' },
+    { id: 'dua-rizq', src: 'https://a7la7ek-wahetaleslam.github.io/a7la7ekaya/mp3/Prayerforsu.mp3', ar: 'دعاء الرزق', en: 'Dua for Rizq' },
+    { id: 'dua-dead', src: 'https://a7la7ek-wahetaleslam.github.io/a7la7ekaya/mp3/Duaa-for-the-dead-Mishary-Alafasy.mp3', ar: 'دعاء للمتوفي (مشاري العفاسي)', en: 'Dua for the Dead - Alafasy' }
+];
+
+let currentLang = 'ar';
+let currentActiveSurahTag = null;
+const audio = document.getElementById('mainAudio');
+const recitersGrid = document.getElementById('reciters-grid');
+const dynamicSurahsContainer = document.getElementById('dynamic-surahs-container');
+const searchInput = document.getElementById('searchInput');
+
+let allSearchTracks = [];
+let allSearchReciters = [];
+
+function initSearchData() {
+    allSearchReciters.push({ type: 'adhkar', ar: 'الأذكار، الأدعية، والرقية', en: 'Adhkar, Duas & Ruqyah', searchStr: 'الأذكار الأدعية الرقية adhkar duas ruqyah' });
+    reciters.forEach(rec => {
+        allSearchReciters.push({ type: 'reciter', rec: rec, ar: rec.ar, en: rec.en, searchStr: (rec.ar + ' ' + rec.en).toLowerCase() });
+        targetSurahs.forEach(surah => {
+            let cleanSurahAr = surah.ar.replace(/^ال/, ''); 
+            allSearchTracks.push({
+                src: rec.prefix + surah.id + '.mp3',
+                ar: 'سورة ' + surah.ar, en: 'Surah ' + surah.en,
+                reciterAr: rec.ar, reciterEn: rec.en,
+                searchStr: ('سورة ' + surah.ar + ' ' + cleanSurahAr + ' ' + rec.ar + ' surah ' + surah.en + ' ' + rec.en).toLowerCase()
+            });
+        });
+    });
+    adhkarAndDuas.forEach(item => {
+        allSearchTracks.push({
+            src: item.src, ar: item.ar, en: item.en,
+            reciterAr: 'مكتبة واحة الإسلام', reciterEn: 'Wahet Al-Eslam',
+            searchStr: (item.ar + ' ' + item.en + ' مكتبة واحة الإسلام wahet al-eslam').toLowerCase()
+        });
+    });
+}
+
+initSearchData();
+
+function resetSearch() {
+    if(searchInput) searchInput.value = '';
+    document.getElementById('search-view').style.display = 'none';
+}
+
+let lastActiveView = 'home';
+searchInput.addEventListener('input', function() {
+    const query = this.value.toLowerCase().trim();
+    const searchView = document.getElementById('search-view');
+    const homeView = document.getElementById('home-view');
+    const surahsView = document.getElementById('surahs-view');
+    
+    if (query === '') {
+        searchView.style.display = 'none';
+        if (lastActiveView === 'home') homeView.style.display = 'block'; else surahsView.style.display = 'block';
+        return;
+    }
+
+    if (searchView.style.display === 'none') {
+        lastActiveView = homeView.style.display !== 'none' ? 'home' : 'surahs';
+    }
+
+    homeView.style.display = 'none';
+    surahsView.style.display = 'none';
+    searchView.style.display = 'block';
+
+    const queryWords = query.split(' ').filter(w => w.length > 0);
+    const matchedReciters = allSearchReciters.filter(r => queryWords.every(word => r.searchStr.includes(word)));
+    const matchedTracks = allSearchTracks.filter(t => queryWords.every(word => t.searchStr.includes(word)));
+
+    const rGrid = document.getElementById('search-reciters-grid');
+    rGrid.innerHTML = '';
+    if(matchedReciters.length > 0) {
+        matchedReciters.forEach(item => {
+            let card = document.createElement('a');
+            card.className = "reciter-card reciter-link";
+            card.setAttribute('data-ar', item.ar);
+            card.setAttribute('data-en', item.en);
+            
+            if(item.type === 'adhkar') {
+                card.style.borderColor = "var(--primary)";
+                card.style.backgroundColor = "var(--primary-light)";
+                card.innerHTML = '<span class="material-symbols-outlined" style="margin-left:8px; color:var(--primary);">book</span> <span class="reciter-name">' + (currentLang === 'ar' ? item.ar : item.en) + '</span>';
+                card.onclick = () => { resetSearch(); openAdhkarView(); };
+            } else {
+                card.innerHTML = '<span class="material-symbols-outlined" style="margin-left:8px; color:#94a3b8;">mic</span> <span class="reciter-name">' + (currentLang === 'ar' ? item.ar : item.en) + '</span>';
+                card.onclick = () => { resetSearch(); openReciterView(item.rec); };
+            }
+            rGrid.appendChild(card);
+        });
+    }
+
+    const tGrid = document.getElementById('search-tracks-grid');
+    tGrid.innerHTML = '';
+    if(matchedTracks.length > 0) {
+        matchedTracks.forEach(item => {
+            let sCard = document.createElement('a');
+            sCard.className = "surah-card surah-link";
+            sCard.setAttribute('data-src', item.src);
+            sCard.setAttribute('data-ar', item.ar);
+            sCard.setAttribute('data-en', item.en);
+            sCard.setAttribute('data-reciter-ar', item.reciterAr);
+            sCard.setAttribute('data-reciter-en', item.reciterEn);
+            
+            let spacing = currentLang === 'ar' ? 'margin-right' : 'margin-left';
+            let titleAr = item.ar + ' <span style="font-size:12px; color:var(--text-muted); ' + spacing + ':10px;">(' + item.reciterAr + ')</span>';
+            let titleEn = item.en + ' <span style="font-size:12px; color:var(--text-muted); ' + spacing + ':10px;">(' + item.reciterEn + ')</span>';
+            
+            sCard.innerHTML = '<span class="surah-title">' + (currentLang === 'ar' ? titleAr : titleEn) + '</span> <span class="material-symbols-outlined">play_circle</span>';
+            sCard.onclick = function() { playSurahFromTag(this); };
+            tGrid.appendChild(sCard);
+        });
+    }
+
+    if (matchedReciters.length === 0 && matchedTracks.length === 0) {
+        tGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 30px; color: var(--text-muted); font-weight: bold; font-size: 18px;">لا توجد نتائج مطابقة</div>';
+    }
+});
+
+function initReciters() {
+    recitersGrid.innerHTML = '';
+    let adhkarCard = document.createElement('a');
+    adhkarCard.className = "reciter-card reciter-link";
+    adhkarCard.style.borderColor = "var(--primary)";
+    adhkarCard.style.backgroundColor = "var(--primary-light)";
+    adhkarCard.setAttribute('data-ar', 'الأذكار، الأدعية، والرقية');
+    adhkarCard.setAttribute('data-en', 'Adhkar, Duas & Ruqyah');
+    adhkarCard.innerHTML = '<span class="material-symbols-outlined" style="margin-left:8px; color:var(--primary);">book</span> <span class="reciter-name">الأذكار، الأدعية، والرقية</span>';
+    adhkarCard.onclick = () => openAdhkarView();
+    recitersGrid.appendChild(adhkarCard);
+
+    reciters.forEach(rec => {
+        let card = document.createElement('a');
+        card.className = "reciter-card reciter-link";
+        card.setAttribute('data-ar', rec.ar);
+        card.setAttribute('data-en', rec.en);
+        card.innerHTML = '<span class="material-symbols-outlined" style="margin-left:8px; color:#94a3b8;">mic</span> <span class="reciter-name">' + (currentLang === 'ar' ? rec.ar : rec.en) + '</span>';
+        card.onclick = () => openReciterView(rec);
+        recitersGrid.appendChild(card);
+    });
+}
+
+function openReciterView(rec) {
+    resetSearch();
+    document.getElementById('home-view').style.display = 'none';
+    document.getElementById('surahs-view').style.display = 'block';
+    
+    const titleEl = document.getElementById('currentReciterTitle');
+    titleEl.setAttribute('data-reciter-ar', rec.ar);
+    titleEl.setAttribute('data-reciter-en', rec.en);
+    titleEl.textContent = currentLang === 'ar' ? rec.ar : rec.en;
+
+    dynamicSurahsContainer.innerHTML = '';
+    targetSurahs.forEach(surah => {
+        let sCard = document.createElement('a');
+        sCard.className = "surah-card surah-link";
+        sCard.setAttribute('data-src', rec.prefix + surah.id + '.mp3');
+        sCard.setAttribute('data-ar', 'سورة ' + surah.ar);
+        sCard.setAttribute('data-en', 'Surah ' + surah.en);
+        sCard.setAttribute('data-reciter-ar', rec.ar);
+        sCard.setAttribute('data-reciter-en', rec.en);
+        sCard.innerHTML = '<span class="surah-title">' + (currentLang === 'ar' ? 'سورة ' + surah.ar : 'Surah ' + surah.en) + '</span> <span class="material-symbols-outlined">play_circle</span>';
+        sCard.onclick = function() { playSurahFromTag(this); };
+        dynamicSurahsContainer.appendChild(sCard);
+    });
+}
+
+function openAdhkarView() {
+    resetSearch();
+    document.getElementById('home-view').style.display = 'none';
+    document.getElementById('surahs-view').style.display = 'block';
+    
+    const titleEl = document.getElementById('currentReciterTitle');
+    titleEl.setAttribute('data-reciter-ar', 'الأذكار والأدعية والرقية');
+    titleEl.setAttribute('data-reciter-en', 'Adhkar, Duas & Ruqyah');
+    titleEl.textContent = currentLang === 'ar' ? 'الأذكار والأدعية والرقية' : 'Adhkar, Duas & Ruqyah';
+
+    dynamicSurahsContainer.innerHTML = '';
+    adhkarAndDuas.forEach(item => {
+        let sCard = document.createElement('a');
+        sCard.className = "surah-card surah-link";
+        sCard.setAttribute('data-src', item.src);
+        sCard.setAttribute('data-ar', item.ar);
+        sCard.setAttribute('data-en', item.en);
+        sCard.setAttribute('data-reciter-ar', 'مكتبة واحة الإسلام');
+        sCard.setAttribute('data-reciter-en', 'Wahet Al-Eslam');
+        sCard.innerHTML = '<span class="surah-title">' + (currentLang === 'ar' ? item.ar : item.en) + '</span> <span class="material-symbols-outlined">play_circle</span>';
+        sCard.onclick = function() { playSurahFromTag(this); };
+        dynamicSurahsContainer.appendChild(sCard);
+    });
+}
+
+function showHomeView() {
+    resetSearch();
+    document.getElementById('home-view').style.display = 'block';
+    document.getElementById('surahs-view').style.display = 'none';
+}
+
+initReciters();
+
+const translations = {
+    ar: { logo: "واحة الإسلام", home: "الرئيسية", forum: "العودة للمنتدى", radio_side: "البث المباشر", radio: "راديو مباشر", search_results: "نتائج البحث" },
+    en: { logo: "Wahet Eslam", home: "Home", forum: "Back to Forum", radio_side: "Live Broadcast", radio: "Live Radio", search_results: "Search Results" }
+};
+
+document.getElementById('langToggle').addEventListener('click', () => {
+    currentLang = currentLang === 'ar' ? 'en' : 'ar';
+    const qContainer = document.getElementById('quran-library-container');
+    qContainer.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+    
+    document.getElementById('langText').textContent = currentLang === 'ar' ? 'English 🌐' : 'عربي 🌐';
+    document.getElementById('backIcon').textContent = currentLang === 'ar' ? 'arrow_forward' : 'arrow_back';
+    
+    qContainer.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = translations[currentLang][el.getAttribute('data-i18n')];
+    });
+
+    qContainer.querySelectorAll('.reciter-link .reciter-name').forEach(span => {
+        span.textContent = span.parentElement.getAttribute('data-' + currentLang);
+    });
+
+    qContainer.querySelectorAll('.surah-link .surah-title').forEach(span => {
+        const parent = span.parentElement;
+        if (parent.parentElement.id === 'search-tracks-grid') {
+            const title = parent.getAttribute('data-' + currentLang);
+            const reciter = parent.getAttribute('data-reciter-' + currentLang);
+            const spacing = currentLang === 'ar' ? 'margin-right' : 'margin-left';
+            span.innerHTML = title + ' <span style="font-size:12px; color:var(--text-muted); ' + spacing + ':10px;">(' + reciter + ')</span>';
+        } else {
+            span.textContent = parent.getAttribute('data-' + currentLang);
+        }
+    });
+
+    const headerTitle = document.getElementById('currentReciterTitle');
+    if (headerTitle.getAttribute('data-reciter-ar')) headerTitle.textContent = headerTitle.getAttribute('data-reciter-' + currentLang);
+
+    if (currentActiveSurahTag) {
+        document.getElementById('playerSurah').textContent = currentActiveSurahTag.getAttribute('data-' + currentLang);
+        document.getElementById('playerReciter').textContent = currentActiveSurahTag.getAttribute('data-reciter-' + currentLang);
+    }
+});
+
+function playSurahFromTag(tagElement) {
+    if (currentActiveSurahTag) currentActiveSurahTag.classList.remove('active');
+    currentActiveSurahTag = tagElement;
+    currentActiveSurahTag.classList.add('active');
+
+    audio.src = tagElement.getAttribute('data-src');
+    document.getElementById('playerSurah').textContent = tagElement.getAttribute('data-' + currentLang);
+    document.getElementById('playerReciter').textContent = tagElement.getAttribute('data-reciter-' + currentLang);
+    audio.play();
+}
+
+function playNextSurah() {
+    if (!currentActiveSurahTag) return;
+    const nextTag = currentActiveSurahTag.nextElementSibling;
+    if (nextTag && nextTag.classList.contains('surah-link')) playSurahFromTag(nextTag);
+}
+
+function playPrevSurah() {
+    if (!currentActiveSurahTag) return;
+    const prevTag = currentActiveSurahTag.previousElementSibling;
+    if (prevTag && prevTag.classList.contains('surah-link')) playSurahFromTag(prevTag);
+}
+
+function togglePlay() {
+    if (!audio.src) return;
+    audio.paused ? audio.play() : audio.pause();
+}
+
+function playLiveRadio() {
+    if (currentActiveSurahTag) currentActiveSurahTag.classList.remove('active');
+    currentActiveSurahTag = null; 
+    audio.src = "https://qurango.net/radio/tarateel";
+    document.getElementById('playerReciter').textContent = currentLang === 'ar' ? "إذاعة القرآن الكريم" : "Quran Radio";
+    document.getElementById('playerSurah').textContent = currentLang === 'ar' ? "بث مباشر" : "Live Stream";
+    audio.play();
+}
+
+const playBtn = document.getElementById('playBtn');
+const progressBar = document.getElementById('progressBar');
+const volumeBar = document.getElementById('volumeBar');
+
+audio.addEventListener('play', () => { playBtn.textContent = 'pause'; });
+audio.addEventListener('pause', () => { playBtn.textContent = 'play_arrow'; });
+audio.addEventListener('ended', playNextSurah);
+
+audio.addEventListener('timeupdate', () => {
+    if(isNaN(audio.duration) || !isFinite(audio.duration)) return; 
+    const progressPercent = (audio.currentTime / audio.duration) * 100;
+    progressBar.value = progressPercent;
+    updateRangeColor(progressBar);
+    document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
+});
+
+audio.addEventListener('loadedmetadata', () => {
+    document.getElementById('totalTime').textContent = isFinite(audio.duration) ? formatTime(audio.duration) : "Live";
+});
+
+progressBar.addEventListener('input', () => {
+    if(isFinite(audio.duration)) {
+        audio.currentTime = (progressBar.value / 100) * audio.duration;
+        updateRangeColor(progressBar);
+    }
+});
+
+volumeBar.addEventListener('input', () => {
+    audio.volume = volumeBar.value / 100;
+    updateRangeColor(volumeBar);
+    document.getElementById('muteBtn').textContent = audio.volume === 0 ? 'volume_off' : 'volume_up';
+});
+
+function toggleMute() {
+    audio.muted = !audio.muted;
+    const btn = document.getElementById('muteBtn');
+    if(audio.muted) { btn.textContent = 'volume_off'; volumeBar.value = 0; } 
+    else { btn.textContent = 'volume_up'; volumeBar.value = audio.volume * 100; }
+    updateRangeColor(volumeBar);
+}
+
+let isDarkMode = false;
+function toggleDarkMode() {
+    isDarkMode = !isDarkMode;
+    var qLib = document.getElementById('quran-library-container');
+    qLib.style.setProperty('--bg-main', isDarkMode ? '#0f172a' : '#f8fafc');
+    qLib.style.setProperty('--bg-surface', isDarkMode ? '#1e293b' : '#ffffff');
+    qLib.style.setProperty('--text-dark', isDarkMode ? '#f8fafc' : '#0f172a');
+    qLib.style.setProperty('--border', isDarkMode ? '#334155' : '#e2e8f0');
+    qLib.style.setProperty('--player-bg', isDarkMode ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)');
+    qLib.style.setProperty('--header-bg', isDarkMode ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)');
+    qLib.style.setProperty('--search-bg', isDarkMode ? '#1e293b' : '#f8fafc');
+}
+
+function formatTime(sec) {
+    const min = Math.floor(sec / 60);
+    const secs = Math.floor(sec % 60);
+    return (min < 10 ? '0':'') + min + ':' + (secs < 10 ? '0':'') + secs;
+}
+
+function updateRangeColor(el) { el.style.background = 'linear-gradient(to right, var(--primary) ' + el.value + '%, var(--border) ' + el.value + '%)'; }
+updateRangeColor(volumeBar);
+
+(function() {
+    function checkRights() {
+        var rightsWrapper = document.getElementById('developer-rights');
+        var devLink = document.getElementById('dev-a7la7ekaya');
+
+        if (!rightsWrapper || !devLink || 
+            !devLink.href.includes('facebook.com/Flying1free') ||
+            !devLink.textContent.includes('تصميم و تطوير الطائر الحر')) {
+            document.body.innerHTML = '<h1 style="color:red; text-align:center; padding:50px;">عفواً! لا يمكنك مسح حقوق المبرمج</h1>'; 
+        }
+    }
+    setInterval(checkRights, 5000);
+})();
