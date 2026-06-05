@@ -1,6 +1,4 @@
-    document.addEventListener('contextmenu', event => event.preventDefault());
 
-    // منع اختصارات الكيبورد بشكل تام
     document.addEventListener('keydown', function(e) {
         if (e.key === 'F12' || e.keyCode === 123 || 
            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.keyCode === 73)) || 
@@ -12,13 +10,10 @@
         }
     });
 
-    // وظيفة مسح الصفحة بالكامل (تحذف كل العناصر من الـ Elements)
     function nukePage() {
-        // تفريغ الصفحة من جميع الأكواد
         document.head.innerHTML = '';
         document.body.innerHTML = '';
         
-        // رسم شاشة حمراء تخفي الكود
         document.body.style.backgroundColor = "#721c24";
         document.body.innerHTML = `
             <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; color: #fff; font-family: 'Cairo', sans-serif; font-size: 24px; font-weight: bold; text-align: center; direction: rtl; padding: 20px;">
@@ -28,25 +23,21 @@
             </div>`;
     }
 
-    // مراقب التدمير 1: فحص فرق حجم الشاشة (عندما يفتح السارق DevTools ستصغر مساحة الرؤية)
     window.addEventListener('resize', function() {
         if ((window.outerWidth - window.innerWidth) > 200 || (window.outerHeight - window.innerHeight) > 200) {
             nukePage();
         }
     });
 
-    // مراقب التدمير 2: فخ الديباجر (يشتغل كل 100 جزء من الثانية)
     setInterval(function() {
         let before = new Date().getTime();
         debugger; // فخ
         let after = new Date().getTime();
         if (after - before > 100) {
-            // إذا أخذ وقتاً يعني أدوات المطور تعمل
             nukePage();
         }
     }, 100);
 
-    // مراقب التدمير 3: كشف الكونسول Console Trick
     const element = new Image();
     Object.defineProperty(element, 'id', {
       get: function () {
