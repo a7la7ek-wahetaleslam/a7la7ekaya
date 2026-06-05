@@ -563,7 +563,7 @@ min-height:ارتفاع الايقونةpx;
 min-width:عرض الايقونةpx;
 width:عرض الايقونةpx;
 }
-img.i_icon_online { background: #FFF; margin-right: 12px; }
+img.i_icon_online {  margin-right: 12px; }
 .offlinebutton{background-color:transparent;background-image:url(https://i.servimg.com/u/f56/18/63/84/73/user_o10.gif);background-position:center center;background-repeat:no-repeat;border:medium none;height:50px;min-height:50px;min-width:50px;width:50px}
         .LG-viewing { margin: 0 5px; font-weight: bold; }
 .quote{-moz-border-radius:7px;-webkit-border-radius:7px;background:#45bcfb url(https://i.servimg.com/u/f16/15/04/02/38/quote_10.png)6px 6px no-repeat;background-color:#ededed;border:1px solid #C3C3C3;border-radius:7px;border-style:solid;border-width:1px;box-shadow:inset 0 0 7px 4px#e8e8e8;color:#000;font-family:Tahoma,Arial,Helvetica,sans-serif;font-size:12px;line-height:125%;overflow:hidden}
