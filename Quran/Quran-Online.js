@@ -1,7 +1,63 @@
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    // منع اختصارات الكيبورد بشكل تام
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'F12' || e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.keyCode === 73 || e.key === 'J' || e.keyCode === 74 || e.key === 'C' || e.keyCode === 67)) || (e.ctrlKey && (e.key === 'U' || e.keyCode === 85)) || (e.ctrlKey && (e.key === 'S' || e.keyCode === 83))) { e.preventDefault(); return false; }
+        if (e.key === 'F12' || e.keyCode === 123 || 
+           (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.keyCode === 73)) || 
+           (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.keyCode === 74)) || 
+           (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.keyCode === 67)) || 
+           (e.ctrlKey && (e.key === 'U' || e.keyCode === 85))) {
+            e.preventDefault();
+            return false;
+        }
     });
+
+    // وظيفة مسح الصفحة بالكامل (تحذف كل العناصر من الـ Elements)
+    function nukePage() {
+        // تفريغ الصفحة من جميع الأكواد
+        document.head.innerHTML = '';
+        document.body.innerHTML = '';
+        
+        // رسم شاشة حمراء تخفي الكود
+        document.body.style.backgroundColor = "#721c24";
+        document.body.innerHTML = `
+            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; color: #fff; font-family: 'Cairo', sans-serif; font-size: 24px; font-weight: bold; text-align: center; direction: rtl; padding: 20px;">
+                <h1 style="color: #ffcccc;">🚨 تم حظر المتصفح 🚨</h1>
+                <p style="font-size: 18px; margin-top: 10px;">أدوات المطور وفحص الأكواد غير مصرح بها.</p>
+                <p style="font-size: 16px; margin-top: 5px; color:#ff9999;">تم محو جميع الأكواد لحماية المحتوى " مع تحيات الطائر الحر". يرجى إغلاق النافذة.</p>
+            </div>`;
+    }
+
+    // مراقب التدمير 1: فحص فرق حجم الشاشة (عندما يفتح السارق DevTools ستصغر مساحة الرؤية)
+    window.addEventListener('resize', function() {
+        if ((window.outerWidth - window.innerWidth) > 200 || (window.outerHeight - window.innerHeight) > 200) {
+            nukePage();
+        }
+    });
+
+    // مراقب التدمير 2: فخ الديباجر (يشتغل كل 100 جزء من الثانية)
+    setInterval(function() {
+        let before = new Date().getTime();
+        debugger; // فخ
+        let after = new Date().getTime();
+        if (after - before > 100) {
+            // إذا أخذ وقتاً يعني أدوات المطور تعمل
+            nukePage();
+        }
+    }, 100);
+
+    // مراقب التدمير 3: كشف الكونسول Console Trick
+    const element = new Image();
+    Object.defineProperty(element, 'id', {
+      get: function () {
+        nukePage();
+      }
+    });
+    setInterval(function() {
+        console.log(element);
+        console.clear();
+    }, 500);
+
 
     const targetSurahs = [
         { id: '001', ar: 'الفاتحة', en: 'Al-Fatihah' }, { id: '002', ar: 'البقرة', en: 'Al-Baqarah' },
