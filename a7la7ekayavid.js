@@ -145,7 +145,7 @@ $(document).ready(function() {
 
     function buildPlayerHtml(url) {
         var bbCodeFormat = '[video]' + url + '[/video]';
-        var htmlFormat = '<div class="a7la7ekaya-video-code" data-video="' + url + '"></div>';
+        var htmlFormat = '&lt;div class=&quot;a7la7ekaya-video-code&quot; data-video=&quot;' + url + '&quot;&gt;&lt;/div&gt;';
 
         return '<div class="a7la7ekaya-vid-box">' +
                     '<div class="a7la7ekaya-vid-topbar">' +
@@ -196,7 +196,7 @@ $(document).ready(function() {
                             '<div class="a7la7ekaya-vid-share-header">مشاركة الفيديو <span class="a7la7ekaya-vid-close-share">×</span></div>' +
                             '<div class="a7la7ekaya-vid-share-row"><label>الرابط المباشر للمقطع:</label><div class="a7la7ekaya-vid-share-input-wrap"><input type="text" readonly value="' + url + '"><button class="a7la7ekaya-vid-copy-btn">نسخ</button></div></div>' +
                             '<div class="a7la7ekaya-vid-share-row"><label>كود المنتديات (BBCode):</label><div class="a7la7ekaya-vid-share-input-wrap"><input type="text" readonly value="' + bbCodeFormat + '"><button class="a7la7ekaya-vid-copy-btn">نسخ</button></div></div>' +
-                            '<div class="a7la7ekaya-vid-share-row"><label>كود HTML للمواقع:</label><div class="a7la7ekaya-vid-share-input-wrap"><input type="text" readonly value=\'' + htmlFormat + '\'><button class="a7la7ekaya-vid-copy-btn">نسخ</button></div></div>' +
+                            '<div class="a7la7ekaya-vid-share-row"><label>كود HTML للمواقع:</label><div class="a7la7ekaya-vid-share-input-wrap"><input type="text" readonly value="' + htmlFormat + '"><button class="a7la7ekaya-vid-copy-btn">نسخ</button></div></div>' +
                         '</div>' +
                     '</div>' +
                 '</div>';
@@ -214,7 +214,14 @@ $(document).ready(function() {
             if (!html || html.indexOf('a7la7ekaya-video-code') === -1) return;
             var regex = /(?:&lt;|<)div\s+class=(?:&quot;|"|'|)a7la7ekaya-video-code(?:&quot;|"|'|)\s+data-video=(?:&quot;|"|'|)(https?:\/\/[^\s<>&"']+)(?:&quot;|"|'|)\s*(?:&gt;|>)\s*(?:&lt;|<)\/div\s*(?:&gt;|>)/gi;
             var replaced = false;
-            var newHtml = html.replace(regex, function(m, url) { replaced = true; return buildPlayerHtml(url); });
+            var newHtml = html.replace(regex, function(m, url, offset, fullStr) { 
+                var before = fullStr.substring(Math.max(0, offset - 15), offset);
+                if (before.match(/value=["']?\s*$/i)) {
+                    return m;
+                }
+                replaced = true; 
+                return buildPlayerHtml(url); 
+            });
             if (replaced) $(this).html(newHtml);
         });
     }
@@ -401,6 +408,7 @@ $(document).ready(function() {
     });
 
 });
+
 
 
 
