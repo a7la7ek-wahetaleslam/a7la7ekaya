@@ -70,13 +70,13 @@
 
     function savePlayerData(src, surahAr, surahEn, reciterAr, reciterEn) {
         let data = { src: src, sAr: surahAr, sEn: surahEn, rAr: reciterAr, rEn: reciterEn };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
     function restorePlayerState() {
-        let savedData = localStorage.getItem(STORAGE_KEY);
-        let savedTime = localStorage.getItem(STORAGE_KEY + '_time');
-        let isPlaying = localStorage.getItem(STORAGE_KEY + '_playing') === 'true';
+        let savedData = sessionStorage.getItem(STORAGE_KEY);
+        let savedTime = sessionStorage.getItem(STORAGE_KEY + '_time');
+        let isPlaying = sessionStorage.getItem(STORAGE_KEY + '_playing') === 'true';
 
         if (savedData) {
             let data = JSON.parse(savedData);
@@ -94,6 +94,22 @@
                 if (playPromise !== undefined) {
                     playPromise.catch(error => {
                         if(playBtn) playBtn.textContent = 'play_arrow';
+                        
+                        let firstInteraction = function() {
+                            let p = audio.play();
+                            if (p !== undefined) {
+                                p.then(() => {
+                                    if(playBtn) playBtn.textContent = 'pause';
+                                    ['click', 'keydown', 'touchstart', 'scroll', 'mousemove'].forEach(evt => {
+                                        document.removeEventListener(evt, firstInteraction);
+                                    });
+                                }).catch(e => {});
+                            }
+                        };
+                        
+                        ['click', 'keydown', 'touchstart', 'scroll', 'mousemove'].forEach(evt => {
+                            document.addEventListener(evt, firstInteraction, { passive: true });
+                        });
                     });
                 }
             }
@@ -122,7 +138,7 @@
         initSearchData();
         if(recitersGrid) initReciters();
 
-        if (!localStorage.getItem(STORAGE_KEY)) {
+        if (!sessionStorage.getItem(STORAGE_KEY)) {
             let defaultReciter = document.getElementById('playerReciter');
             if(defaultReciter) defaultReciter.textContent = 'مكتبة ' + forumName;
         }
@@ -176,16 +192,16 @@
         if(audio) {
             audio.addEventListener('play', () => { 
                 if(playBtn) playBtn.textContent = 'pause'; 
-                localStorage.setItem(STORAGE_KEY + '_playing', 'true');
+                sessionStorage.setItem(STORAGE_KEY + '_playing', 'true');
             });
             audio.addEventListener('pause', () => { 
                 if(playBtn) playBtn.textContent = 'play_arrow'; 
-                localStorage.setItem(STORAGE_KEY + '_playing', 'false');
+                sessionStorage.setItem(STORAGE_KEY + '_playing', 'false');
             });
             audio.addEventListener('ended', playNextSurah);
             audio.addEventListener('timeupdate', () => {
                 if(isNaN(audio.duration) || !isFinite(audio.duration)) return; 
-                localStorage.setItem(STORAGE_KEY + '_time', audio.currentTime);
+                sessionStorage.setItem(STORAGE_KEY + '_time', audio.currentTime);
                 if(progressBar) { progressBar.value = (audio.currentTime / audio.duration) * 100; updateRangeColor(progressBar); }
                 let cTime = document.getElementById('currentTime'); if(cTime) cTime.textContent = formatTime(audio.currentTime);
             });
@@ -207,7 +223,7 @@
                 if(qOverlay) qOverlay.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
                 if(pPlayer) pPlayer.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
                 
-                let lText = document.getElementById('langText'); if(lText) lText.textContent = currentLang === 'ar' ? 'English ????' : 'عربي ????';
+                let lText = document.getElementById('langText'); if(lText) lText.textContent = currentLang === 'ar' ? 'English 🇺🇸' : 'عربي 🇪🇬';
                 let bIcon = document.getElementById('backIcon'); if(bIcon) bIcon.textContent = currentLang === 'ar' ? 'arrow_forward' : 'arrow_back';
                 
                 const translations = { 
@@ -227,7 +243,7 @@
                     });
                 }
                 const headerTitle = document.getElementById('currentReciterTitle'); if (headerTitle && headerTitle.getAttribute('data-reciter-ar')) { headerTitle.textContent = headerTitle.getAttribute('data-reciter-' + currentLang); }
-                let savedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                let savedData = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
                 if (savedData) {
                     let pSurah = document.getElementById('playerSurah'); let pReciter = document.getElementById('playerReciter');
                     if(pSurah) pSurah.textContent = currentLang === 'ar' ? savedData.sAr : savedData.sEn;
